@@ -12,25 +12,29 @@ const CHARACTER_SETTINGS = {
     paddleColor: '#3B82F6',
     paddleWidth: 100,
     paddleHeight: 10,
-    paddleSpeed: 1
+    paddleSpeed: 1,
+    specialAbility: 'none'
   },
   speed: {
     paddleColor: '#EF4444',
     paddleWidth: 80,
     paddleHeight: 8,
-    paddleSpeed: 1.2
+    paddleSpeed: 1.2,
+    specialAbility: 'ballSpeed'
   },
   power: {
     paddleColor: '#10B981',
     paddleWidth: 120,
     paddleHeight: 12,
-    paddleSpeed: 0.9
+    paddleSpeed: 0.9,
+    specialAbility: 'paddleShrink'
   },
   balanced: {
     paddleColor: '#8B5CF6',
     paddleWidth: 100,
     paddleHeight: 10,
-    paddleSpeed: 1.1
+    paddleSpeed: 1.1,
+    specialAbility: 'ballCurve'
   }
 };
 
@@ -204,7 +208,7 @@ router.get('/:userid/sent-requests', catchAsync(async (req, res) => {
   }
   
   // status: 'pending'のリクエストのみフィルタリング
-  const pendingRequests = user.sentRequests
+  const pendingRequests = user.requests
     .filter(request => request.status === 'pending')
     .map(request => ({
       _id: request._id,
@@ -219,7 +223,6 @@ router.get('/:userid/sent-requests', catchAsync(async (req, res) => {
 // フレンドリクエストを承認
 router.post('/:userid/friend-requests/:requestId/accept', catchAsync(async (req, res) => {
   const { userid, requestId } = req.params;
-  
   const user = await User.findById(userid);
   if (!user) {
     return res.status(404).json({ error: 'User not found' });
@@ -247,6 +250,11 @@ router.post('/:userid/friend-requests/:requestId/accept', catchAsync(async (req,
   user.friendRequests[requestIndex].status = 'accepted';
   
   // フレンドリストに相互に追加
+  // このコードは、ユーザーのフレンドリストに既に送信者が含まれていないか確認し、含まれていない場合のみ追加します
+  // user.friends.some() - 配列内の少なくとも1つの要素が条件を満たすかチェックするメソッド
+  // friend.equals(fromUserId) - MongoDBのObjectIdを比較するための特殊メソッド
+  // 条件が真でない場合（!で否定）、つまりフレンドリストに送信者がいない場合
+  // user.friends.push(fromUserId) - フレンドリストに送信者のIDを追加
   if (!user.friends.some(friend => friend.equals(fromUserId))) {
     user.friends.push(fromUserId);
   }
@@ -254,12 +262,12 @@ router.post('/:userid/friend-requests/:requestId/accept', catchAsync(async (req,
   await user.save();
   
   // 送信者の送信リクエストのステータスも更新
-  const sentRequestIndex = fromUser.sentRequests.findIndex(
+  const sentRequestIndex = fromUser.requests.findIndex(
     request => request.toUser.equals(user._id) && request.status === 'pending'
   );
   
   if (sentRequestIndex !== -1) {
-    fromUser.sentRequests[sentRequestIndex].status = 'accepted';
+    fromUser.requests[sentRequestIndex].status = 'accepted';
   }
   
   // 送信者のフレンドリストにも追加
@@ -270,7 +278,7 @@ router.post('/:userid/friend-requests/:requestId/accept', catchAsync(async (req,
   await fromUser.save();
   
   res.json({ 
-    message: 'Friend request accepted', 
+    message: 'フレンドリクエストを承認しました', 
     friend: {
       _id: fromUser._id,
       username: fromUser.username,
@@ -323,14 +331,13 @@ router.post('/:userid/friend-requests/:requestId/reject', catchAsync(async (req,
 // 送信済みフレンドリクエストをキャンセル
 router.post('/:userid/sent-requests/:requestId/cancel', catchAsync(async (req, res) => {
   const { userid, requestId } = req.params;
-  
   const user = await User.findById(userid);
   if (!user) {
-    return res.status(404).json({ error: 'User not found' });
+    return res.status(404).json({ error: 'ユーザーが見つかりません' });
   }
   
   // 送信リクエストを検索
-  const requestIndex = user.sentRequests.findIndex(
+  const requestIndex = user.requests.findIndex(
     request => request._id.toString() === requestId && request.status === 'pending'
   );
   
@@ -338,11 +345,11 @@ router.post('/:userid/sent-requests/:requestId/cancel', catchAsync(async (req, r
     return res.status(404).json({ error: 'Request not found or already processed' });
   }
   
-  const request = user.sentRequests[requestIndex];
+  const request = user.requests[requestIndex];
   const toUserId = request.toUser;
   
   // リクエストを削除
-  user.sentRequests.splice(requestIndex, 1);
+  user.requests.splice(requestIndex, 1);
   await user.save();
   
   // 相手側の受信リクエストも削除
@@ -353,6 +360,8 @@ router.post('/:userid/sent-requests/:requestId/cancel', catchAsync(async (req, r
     );
     
     if (receivedRequestIndex !== -1) {
+      // splice(開始インデックス, 削除する要素数, [追加する要素])
+      // receivedRequestIndexの位置から1つの要素を削除
       toUser.friendRequests.splice(receivedRequestIndex, 1);
       await toUser.save();
     }
@@ -373,7 +382,7 @@ router.delete('/:userid/friends/:friendId', catchAsync(async (req, res) => {
   // フレンドリストから削除
   const friendIndex = user.friends.findIndex(friend => friend.toString() === friendId);
   if (friendIndex === -1) {
-    return res.status(404).json({ error: 'Friend not found' });
+    return res.status(404).json({ error: 'フレンドが見つかりません' });
   }
   
   user.friends.splice(friendIndex, 1);
@@ -389,7 +398,7 @@ router.delete('/:userid/friends/:friendId', catchAsync(async (req, res) => {
     }
   }
   
-  res.json({ message: 'Friend removed successfully' });
+  res.json({ message: 'フレンドを削除しました' });
 }));
 
 // (以前のフレンド追加機能は残しておく)

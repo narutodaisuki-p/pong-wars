@@ -23,17 +23,17 @@ const Settings = () => {
     },
     speed: {
       name: 'スピード',
-      description: '小さいが素早いパドル',
+      description: 'ボールを加速させる特殊能力を持つパドル',
       icon: '🔴'
     },
     power: {
       name: 'パワー',
-      description: '大きいが遅いパドル',
+      description: '相手のパドルを小さくする特殊能力を持つパドル',
       icon: '🟢'
     },
     balanced: {
       name: 'バランス',
-      description: '速さとサイズのバランスが良いパドル',
+      description: 'ボールの軌道を曲げる特殊能力を持つパドル',
       icon: '🟣'
     }
   };
@@ -78,6 +78,7 @@ const Settings = () => {
     fetchSentRequests();
   }, [user, token]);
 
+  // フレンドリストを取得
   const fetchFriends = async () => {
     try {
       const response = await fetch(`http://localhost:3001/users/${user._id}/friends`, {
@@ -96,6 +97,7 @@ const Settings = () => {
     }
   };
 
+  // フレンドリクエストを取得
   const fetchFriendRequests = async () => {
     try {
       const response = await fetch(`http://localhost:3001/users/${user._id}/friend-requests`, {
@@ -115,6 +117,7 @@ const Settings = () => {
     }
   };
 
+  // 送信済みリクエストを取得
   const fetchSentRequests = async () => {
     try {
       const response = await fetch(`http://localhost:3001/users/${user._id}/sent-requests`, {
@@ -133,6 +136,7 @@ const Settings = () => {
     }
   };
 
+  // キャラクターを変更
   const handleCharacterChange = async (newCharacter) => {
     try {
       const response = await fetch(`http://localhost:3001/users/${user._id}/character`, {
@@ -158,6 +162,7 @@ const Settings = () => {
     }
   };
 
+  // フレンドリクエストを送信
   const handleSendFriendRequest = async () => {
     if (!friendUsername.trim()) {
       setMessage('ユーザー名を入力してください');
@@ -188,6 +193,7 @@ const Settings = () => {
     }
   };
 
+  // フレンドリクエストを承認
   const handleAcceptFriendRequest = async (requestId) => {
     try {
       const response = await fetch(`http://localhost:3001/users/${user._id}/friend-requests/${requestId}/accept`, {
@@ -213,6 +219,7 @@ const Settings = () => {
     }
   };
 
+// フレンドリクエストを拒否
   const handleRejectFriendRequest = async (requestId) => {
     try {
       const response = await fetch(`http://localhost:3001/users/${user._id}/friend-requests/${requestId}/reject`, {
@@ -235,6 +242,7 @@ const Settings = () => {
     }
   };
 
+  // フレンドリクエストをキャンセル
   const handleCancelFriendRequest = async (requestId) => {
     try {
       const response = await fetch(`http://localhost:3001/users/${user._id}/sent-requests/${requestId}/cancel`, {
@@ -257,6 +265,7 @@ const Settings = () => {
     }
   };
 
+  // フレンドを削除
   const handleRemoveFriend = async (friendId) => {
     try {
       const response = await fetch(`http://localhost:3001/users/${user._id}/friends/${friendId}`, {

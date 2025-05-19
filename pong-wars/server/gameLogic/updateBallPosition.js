@@ -3,6 +3,35 @@ const User = require('../models/User');
     // ボールの最大速度を制限
     const maxSpeed = 25;
 
+    // 特殊能力の効果を適用する関数
+    const applySpecialAbility = (playerId, character, ball, gameState, gameId) => {
+        const player = gameState[gameId].players[playerId];
+        
+        switch(character) {
+            case 'speed':
+                // ボールの速度を上げる
+                ball.speedX *= 1.5;
+                ball.speedY *= 1.5;
+                break;
+            case 'power':
+                // 相手のパドルを小さくする
+                const opponentId = Object.keys(gameState[gameId].players).find(id => id !== playerId);
+                if (opponentId) {
+                    const opponent = gameState[gameId].players[opponentId];
+                    opponent.width = Math.max(opponent.width * 0.8, 40); // 最小サイズを40pxに制限
+                }
+                break;
+            case 'balanced':
+                // ボールの軌道を曲げる
+                const randomAngle = (Math.random() - 0.5) * 30; // -15度から15度のランダムな角度
+                const radian = randomAngle * Math.PI / 180;
+                const newSpeedX = ball.speedX * Math.cos(radian) - ball.speedY * Math.sin(radian);
+                const newSpeedY = ball.speedX * Math.sin(radian) + ball.speedY * Math.cos(radian);
+                ball.speedX = newSpeedX;
+                ball.speedY = newSpeedY;
+                break;
+        }
+    };
 
 function updateBallPosition(gameState, gameId, player1Id, player2Id, io, whichWin, winScore) {
     const ball = gameState[gameId].ball;
@@ -73,6 +102,8 @@ function updateBallPosition(gameState, gameId, player1Id, player2Id, io, whichWi
         }
         
         applyCharacterEffects(player1Id, player1Character);
+        // 特殊能力を適用
+        applySpecialAbility(player1Id, player1Character, ball, gameState, gameId);
     }
     
     if (ball.y - ball.radius <= gameState[gameId].players[player2Id].y + gameState[gameId].players[player2Id].height &&
@@ -93,6 +124,8 @@ function updateBallPosition(gameState, gameId, player1Id, player2Id, io, whichWi
         }
 
         applyCharacterEffects(player2Id, player2Character);
+        // 特殊能力を適用
+        applySpecialAbility(player2Id, player2Character, ball, gameState, gameId);
     }
 
     // スコア処理

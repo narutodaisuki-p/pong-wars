@@ -42,7 +42,7 @@ const UserSchema = new Schema({
       default: Date.now
     }
   }],
-  sentRequests: [{
+  requests: [{
     toUser: {
       type: Schema.Types.ObjectId,
       ref: 'User'
