@@ -1,0 +1,35 @@
+.chat-message {
+    display: flex;
+    flex-direction: column;
+    max-width: 60%;
+    margin: 10px;
+    padding: 10px;
+    border-radius: 10px;
+    background-color: #f1f1f1;
+    align-self: flex-start;
+    color: #333;
+  }
+  
+  .chat-message.own {
+    background-color: #cce5ff; /* 自分の発言は水色系 */
+    align-self: flex-end;
+    text-align: right;
+  }
+  
+  .chat-message-header {
+    font-weight: bold;
+    font-size: 0.9em;
+    margin-bottom: 5px;
+  }
+  
+  .chat-message-body {
+    font-size: 1em;
+    word-wrap: break-word;
+  }
+  
+  .chat-message-time {
+    font-size: 0.8em;
+    color: #888;
+    margin-top: 5px;
+  }
+  
